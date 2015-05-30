@@ -1,0 +1,5 @@
+#!/usr/bin/env ruby
+
+require 'upgrademe/cli'
+
+Upgrademe::Cli.start(ARGV)

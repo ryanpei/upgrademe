@@ -3,23 +3,18 @@ require 'highline'
 module Upgrademe
 class DetermineOriginCF
   # Determine what version of Elastic Runtime we're starting with
-  def ask(opsmgrvers)
+  def ask(possible_cf_versions)
+    hash = Hash.new
 
-    if opsmgrvers == 1.3
-    choose do |menu|
+    q = choose do |menu|
+      menu.header = 'Possible versions of Elastic Runtime you have'
       menu.prompt = 'Which version of Elastic Runtime do you have currently?'
-      menu.choice('1.4.3')
-      menu.choice('1.4.2')
-      menu.choice('1.4.1')
-      menu.choice('1.4.0')
-      menu.choice('1.3.5')
-      menu.choice('1.3.4')
-      menu.choice('1.3.3')
-      menu.choice('1.3.2')
-      menu.choice('1.3.1')
-      menu.choice('1.3.0')
+      possible_cf_versions.fetch('cf').each do |x|
+        menu.choice(x.first)
+        hash[x.first] = x.last
+      end
     end
-    end
+    [q,hash[q]]
 
   end
 end

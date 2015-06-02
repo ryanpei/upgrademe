@@ -1,18 +1,21 @@
 require 'highline/import'
+require 'yaml'
 
 module Upgrademe
   class DetermineOriginOpsMgr
     # Determine what version of Ops Mgr we're starting with
-    def ask
+    def ask(filepath)
+      hash = Hash.new
+      opsmgrs = YAML.load_file(filepath)
       q = choose do |menu|
-        menu.header = 'Available versions of PCF Ops Manager'
+        say("<%= color('Available versions of PCF Ops Manager',CYAN) %>")
         menu.prompt = 'Which version of Ops Manager do you have currently?'
-        menu.choice('1.4.2')
-        menu.choice('1.4.1')
-        menu.choice('1.4.0')
-        menu.choice('1.3.4')
+        opsmgrs.each do |x|
+          menu.choice(x.first)
+          hash[x.first] = x.last.fetch('installation_version')
+        end
       end
-      q
+      [q,hash[q]]
     end
 
   end

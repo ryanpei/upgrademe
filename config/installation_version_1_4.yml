@@ -1,3 +1,5 @@
+opsmgr:
+
 cf:
   1.4.0:
     upgrades_from:

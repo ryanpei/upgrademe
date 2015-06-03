@@ -29,6 +29,8 @@ module Upgrademe
       origin_filepath = File.join($CONFIG_PATH, 'installation_version_' + origin_installation_version.to_s.gsub(/[.]/,'_') + '.yml')
       original_cf = Upgrademe::DetermineOriginCF.new.ask(origin_filepath)
 
+      other_tiles_original = {'p-mysql'=>'1.3.2','p-redis'=>'1.3.2'}
+
       latest_versions = YAML.load_file(File.join($CONFIG_PATH,'latest_versions.yml'))
       latest_opsmgr_version = latest_versions.fetch('opsmgr')
       latest_installation_version = YAML.load_file(File.join($CONFIG_PATH,'opsmgr_versions.yml')).fetch(latest_opsmgr_version).fetch('installation_version')

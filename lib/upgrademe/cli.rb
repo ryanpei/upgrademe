@@ -22,8 +22,7 @@ module Upgrademe
     def to_latest
       require 'upgrademe/determine_origin_opsmgr'
       require 'upgrademe/determine_origin_cf'
-      require 'upgrademe/check_upgrades_before_opsmgr'
-      require 'upgrademe/other_product_upgrade_validator'
+      require 'upgrademe/instruction_writer'
 
       instruction_steps = []
 
@@ -36,6 +35,8 @@ module Upgrademe
       #temporary values here
       other_tiles_original = {'p-mysql' => '1.3.2', 'p-redis' => '1.3.2'}
       other_tiles_final = {'p-mysql' => '1.5.0', 'p-redis' => '1.4.4'}
+      #other_tiles_original = {'p-mysql' => '1.3.2'}
+      #other_tiles_final = {'p-mysql' => '1.5.0'}
       #other_tiles_original = {}
       #other_tiles_final = {}
 
@@ -46,60 +47,7 @@ module Upgrademe
 
       latest_cf_version = latest_versions.fetch('cf')
 
-      cf_step_required = Gem::Version.new(original_cf_version) < Gem::Version.new(latest_cf_version)
-      opsmgr_upgrade_required = Gem::Version.new(original_opsmgr_version) < Gem::Version.new(latest_opsmgr_version)
-      opsmgr_up_to_date = Gem::Version.new(original_opsmgr_version) == Gem::Version.new(latest_opsmgr_version)
-      product_upgrades_req = Upgrademe::OtherProductUpgradeValidator.new.requiredornot(other_tiles_original, other_tiles_final)
-
-      if opsmgr_upgrade_required
-        opsmgr_instructions = 'Upgrade your Ops Manager to version ' + latest_opsmgr_version
-        cf_result = Upgrademe::CheckUpgradesBeforeOpsmgr.new.check('cf', original_cf_version, latest_cf_version, latest_filepath, origin_filepath)
-        other_products_results = Array.new
-
-        other_product_needs_mediation = false
-        other_tiles_original.keys.each do |x|
-          other_products_result = Upgrademe::CheckUpgradesBeforeOpsmgr.new.check(x, other_tiles_original.fetch(x), other_tiles_final.fetch(x), latest_filepath, origin_filepath)
-          other_products_results.push(other_products_result)
-        end
-
-
-        while cf_step_required || product_upgrades_req
-
-          if cf_result.first
-            instruction_steps.push('Upgrade Elastic Runtime to version ' + cf_result.last)
-
-            #other_products_results.each do |x|
-
-            #end
-          elsif other_product_needs_mediation
-
-          else
-            instruction_steps.push(opsmgr_instructions)
-            instruction_steps.push('Upgrade Elastic Runtime to version ' + cf_result.last)
-            cf_step_required = false
-            product_upgrades_req = false
-          end
-          cf_result = Upgrademe::CheckUpgradesBeforeOpsmgr.new.check('cf', cf_result.last, latest_cf_version, latest_filepath, origin_filepath)
-        end
-
-      elsif opsmgr_up_to_date
-        if Gem::Version.new(original_cf_version) == Gem::Version.new(latest_cf_version)
-          instruction_steps.push('You have the latest versions of Ops Manager and Elastic Runtime')
-        else
-          instruction_steps.push('You have the latest version of Ops Manager installed.')
-          instruction_steps.push('Upgrade Elastic Runtime to version ' + latest_cf_version)
-        end
-      else
-        opsmgr_instruction = 'You seem to have an Ops Manager version that is more recent than the latest version I know.'
-        instruction_steps.push(opsmgr_instruction)
-      end
-
-      i = 1
-      puts 'Here are your upgrade instructions. Best of luck!'.green
-      instruction_steps.each do |x|
-        puts (i.to_s + '. ' + x).white
-        i = i+1
-      end
+      Upgrademe::InstructionOrderer.new.instruct(original_cf_version,latest_cf_version,latest_opsmgr_version,original_opsmgr_version,other_tiles_original,other_tiles_final,origin_filepath,latest_filepath)
 
     end
   end

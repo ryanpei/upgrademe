@@ -2,7 +2,7 @@ require 'highline/import'
 require 'yaml'
 
 module Upgrademe
-  class DetermineOriginOpsMgr
+  class OriginOpsmgrAsker
     # Determine what version of Ops Mgr we're starting with
     def ask(filepath)
       hash = Hash.new

@@ -1,7 +1,7 @@
 require 'highline'
 
 module Upgrademe
-class DetermineOriginCF
+class OriginCfAsker
   # Determine what version of Elastic Runtime we're starting with
   def ask(filepath)
     #hash = Hash.new

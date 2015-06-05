@@ -20,20 +20,21 @@ module Upgrademe
     desc 'to-latest', 'Get all my products to their latest versions'
 
     def to_latest
-      require 'upgrademe/determine_origin_opsmgr'
-      require 'upgrademe/determine_origin_cf'
+      require 'upgrademe/origin_opsmgr_asker'
+      require 'upgrademe/origin_cf_asker'
       require 'upgrademe/instruction_writer'
+      require 'upgrademe/other_products_asker'
+      require 'upgrademe/other_products_origin_versions_asker'
+      require 'upgrademe/other_products_latest_versions_mapper'
 
-      instruction_steps = []
-
-      original_opsmgr = Upgrademe::DetermineOriginOpsMgr.new.ask(File.join($CONFIG_PATH, 'opsmgr_versions.yml'))
+      original_opsmgr = Upgrademe::OriginOpsmgrAsker.new.ask(File.join($CONFIG_PATH, 'opsmgr_versions.yml'))
       original_opsmgr_version = original_opsmgr.first
       origin_installation_version = original_opsmgr.last
       origin_filepath = File.join($CONFIG_PATH, 'installation_version_' + origin_installation_version.to_s.gsub(/[.]/, '_') + '.yml')
-      original_cf_version = Upgrademe::DetermineOriginCF.new.ask(origin_filepath)
+      original_cf_version = Upgrademe::OriginCfAsker.new.ask(origin_filepath)
 
       #temporary values here
-      other_tiles_original = {'p-mysql' => '1.3.2', 'p-redis' => '1.3.2'}
+      #other_tiles_original = {'p-mysql' => '1.3.2', 'p-redis' => '1.3.2'}
       other_tiles_final = {'p-mysql' => '1.5.0', 'p-redis' => '1.4.4'}
       #other_tiles_original = {'p-mysql' => '1.3.2'}
       #other_tiles_final = {'p-mysql' => '1.5.0'}
@@ -47,7 +48,12 @@ module Upgrademe
 
       latest_cf_version = latest_versions.fetch('cf')
 
-      Upgrademe::InstructionOrderer.new.instruct(original_cf_version,latest_cf_version,latest_opsmgr_version,original_opsmgr_version,other_tiles_original,other_tiles_final,origin_filepath,latest_filepath)
+      other_tiles = Upgrademe::OtherProductsAsker.new.ask(latest_filepath)
+      other_tiles_original = Upgrademe::OtherProductsOriginVersionsAsker.new.ask(other_tiles,origin_filepath)
+      other_tiles_final = Upgrademe::OtherProductsLatestVersionsMapper.new.map(other_tiles,latest_versions)
+
+      instruction_set = Upgrademe::InstructionOrderer.new(original_cf_version,latest_cf_version,latest_opsmgr_version,original_opsmgr_version,other_tiles_original,other_tiles_final,origin_filepath,latest_filepath)
+      instruction_set.instruct
 
     end
   end
